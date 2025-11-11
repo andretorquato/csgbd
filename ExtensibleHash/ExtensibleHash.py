@@ -83,3 +83,40 @@ class ExtensibleHash:
     def display(self):
         """Exibe o diretório e os buckets da tabela hash."""
         pass
+    
+def main(): 
+    print("Hash Extensível\n")
+    bucket_size = int(input("tamanho máximo itens por bucket:"))
+    hash = ExtensibleHash(bucket_size)
+    
+    while True: 
+        print("\n1. Inserir\n2. Buscar\n3. Remover\n4. Exibir\n5. Sair")
+        cmd = int(input("Escolha uma opção: "))
+        if cmd == 1: 
+            key = int(input("Chave (inteiro): "))
+            value = input("Valor: ")
+            hash.insert(key, value)
+            print(f"Item ({key}, {value}) inserido.")
+        elif cmd == 2: 
+            key = int(input("Chave (inteiro): "))
+            result = hash.search(key)
+            if result is not None:
+                print(f"Valor encontrado: {result}")
+            else:
+                print("Chave não encontrada.")
+        elif cmd == 3: 
+            key = int(input("Chave (inteiro): "))
+            if hash.remove(key):
+                print("Item removido.")
+            else:
+                print("Chave não encontrada.")
+        elif cmd == 4: 
+            hash.display()
+        elif cmd == 5: 
+            print("---")
+            break
+        else: 
+            print("Opção inválida. Tente novamente.")
+
+if __name__ == "__main__":
+    main()
