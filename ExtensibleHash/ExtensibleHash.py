@@ -70,7 +70,28 @@ class ExtensibleHash:
 
     def insert(self, key: int, value: any):
         """Insere um par (chave, valor) na estrutura."""
-        pass
+        while True:
+            dir_index = self._get_directory_index(key)
+            bucket_id = self.directory[dir_index]
+            bucket = self.buckets[bucket_id]
+            
+            bits = format(dir_index, f'0{self.global_depth}b')
+            
+            print(f"Inserindo chave {key} no bucket {bucket_id} (dir index: {dir_index}, bits: {bits})")
+            
+            # se chave já existe, atualiza valor
+            for i, (k, v) in enumerate(bucket["items"]): 
+                if k == key:
+                    bucket["items"][i] = (key, value)
+                    return
+            
+            if len(bucket["items"]) < self.bucket_size:
+                bucket["items"].append((key, value))
+                return
+            
+            # bucket cheio, dividir
+            self._split_bucket(bucket_id)
+            # tentar inserir novamente
 
     def search(self, key: int) -> any:
         """Retorna o valor associado à chave, se existir."""
