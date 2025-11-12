@@ -94,7 +94,18 @@ class ExtensibleHash:
 
     def search(self, key: int) -> any:
         """Retorna o valor associado à chave, se existir."""
-        pass
+        dir_index = self._get_directory_index(key)
+        bits = format(dir_index, f'0{self.global_depth}b')
+        bucket_id = self.directory[dir_index]
+        bucket = self.buckets[bucket_id]
+        
+        for (k, v) in bucket["items"]:
+            if k == key:
+                print(f"Chave {key} encontrada no bucket {bucket_id} (dir index: {dir_index}, bits: {bits})")
+                return v
+    
+        print(f"Chave {key} não encontrada no bucket")
+        return None
 
     def remove(self, key: int) -> bool:
         """Remove o registro com a chave informada."""
