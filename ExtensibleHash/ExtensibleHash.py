@@ -18,16 +18,16 @@ class ExtensibleHash:
         # diretório inicial apontando para os dois buckets
         self.directory = [0, 1]  
 
-        def _hash(self, key: int) -> int:
+    def _hash(self, key: int) -> int:
             """hash simples(retornando propria chave)"""
             return key
         
-        def _get_directory_index(self, key: int) -> int:
+    def _get_directory_index(self, key: int) -> int:
             h = self._hash(key)
             mask = (1 << self.global_depth) - 1
             return h & mask
         
-        def _split_bucket(self, bucket_id: int): 
+    def _split_bucket(self, bucket_id: int): 
             """Divide o bucket quando ele estiver cheio e aumentar a profundidade local"""
             old_bucket = self.buckets[bucket_id]
             old_local_depth = old_bucket["local_depth"]
@@ -67,7 +67,6 @@ class ExtensibleHash:
                 b_id = self.directory[dir_index]
                 self.buckets[b_id]["items"].append((k, v))
 
-
     def insert(self, key: int, value: any):
         """Insere um par (chave, valor) na estrutura."""
         while True:
@@ -103,7 +102,16 @@ class ExtensibleHash:
 
     def display(self):
         """Exibe o diretório e os buckets da tabela hash."""
-        pass
+        print("\n=== Extensible Hash ===")
+        print("\nDiretório:")
+        print(f"Profundidade Global: {self.global_depth}")
+        for i,bucket_index in enumerate(self.directory):
+            bits = format(i, f'0{self.global_depth}b')
+            print(f"Index {i} (bits: {bits}) -> Bucket {bucket_index}")
+        
+        print("\nBuckets:")
+        for i, bucket in enumerate(self.buckets):
+            print(f"Bucket {i}: Profundidade Local: {bucket['local_depth']}, Itens: {bucket['items']}")
     
 def main(): 
     print("Hash Extensível\n")
