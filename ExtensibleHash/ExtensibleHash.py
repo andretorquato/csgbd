@@ -174,9 +174,16 @@ class ExtensibleHash:
             bits = format(i, f'0{self.global_depth}b')
             print(f"Index {i} (bits: {bits}) -> Bucket {bucket_index}")
         
+        
+        refcount = [0]*len(self.buckets)
+        for bidx in self.directory:
+            if bidx < len(refcount):
+              refcount[bidx] += 1
+              
         print("\nBuckets:")
         for i, bucket in enumerate(self.buckets):
-            print(f"Bucket {i}: Profundidade Local: {bucket['local_depth']}, Itens: {bucket['items']}")
+            if refcount[i] > 0:
+              print(f"Bucket {i}: Profundidade Local: {bucket['local_depth']}, Itens: {bucket['items']}")
     
 def main(): 
     print("Hash Extensível\n")
