@@ -9,72 +9,68 @@ class ExtensibleHash:
         self.buckets = []
 
         # iniciar 2 buckets
-        for _ in range(2): 
+        for _ in range(2):
             self.buckets.append({
                 "local_depth": 1,
                 "items": []
             })
 
         # diretório inicial apontando para os dois buckets
-        self.directory = [0, 1]  
+        self.directory = [0, 1]
 
     def _hash(self, key: int) -> int:
-            """hash simples(retornando propria chave)"""
-            return key
-        
+        """hash simples (retornando a própria chave)"""
+        return key
+
     def _get_directory_index(self, key: int) -> int:
-            h = self._hash(key)
-            mask = (1 << self.global_depth) - 1
-            return h & mask
+        h = self._hash(key)
+        mask = (1 << self.global_depth) - 1
+        return h & mask
 
     def _directory_indexes_for(self, bucket_id: int):
         return [i for i, b in enumerate(self.directory) if b == bucket_id]
-        
-    def _split_bucket(self, bucket_id: int): 
-            """Divide o bucket quando ele estiver cheio e aumentar a profundidade local"""
-            old_bucket = self.buckets[bucket_id]
-            old_local_depth = old_bucket["local_depth"]
 
-            print(f"\n dividindo bucket {bucket_id} profundidade local {old_local_depth}")
+    def _split_bucket(self, bucket_id: int):
+        """Divide o bucket quando ele estiver cheio e aumenta profundidade local"""
+        old_bucket = self.buckets[bucket_id]
+        old_local_depth = old_bucket["local_depth"]
 
-            old_bucket["local_depth"] += 1
-            if old_bucket["local_depth"] > self.global_depth:
-                print("aumentando profundidade global")
-                self.global_depth += 1
-                self.directory = self.directory * 2
-                print(f"nova profundidade global: {self.global_depth}")
+        print(f"\n dividindo bucket {bucket_id} profundidade local {old_local_depth}")
 
-            new_bucket_id = len(self.buckets)
-            new_bucket = {"local_depth": old_bucket["local_depth"], "items": []}
-            self.buckets.append(new_bucket)
-            diff_bit = 1 << (old_bucket["local_depth"] - 1)
+        old_bucket["local_depth"] += 1
+        if old_bucket["local_depth"] > self.global_depth:
+            print("aumentando profundidade global")
+            self.global_depth += 1
+            self.directory = self.directory * 2
+            print(f"nova profundidade global: {self.global_depth}")
 
-    
-            for i in range(len(self.directory)):
-                if self.directory[i] == bucket_id and (i & diff_bit):
-                    self.directory[i] = new_bucket_id
+        new_bucket_id = len(self.buckets)
+        new_bucket = {"local_depth": old_bucket["local_depth"], "items": []}
+        self.buckets.append(new_bucket)
+        diff_bit = 1 << (old_bucket["local_depth"] - 1)
 
-            old_items = old_bucket["items"]
-            old_bucket["items"] = []
-            for (k, v) in old_items:
-                dir_index = self._get_directory_index(k)
-                b_id = self.directory[dir_index]
-                self.buckets[b_id]["items"].append((k, v))
+        for i in range(len(self.directory)):
+            if self.directory[i] == bucket_id and (i & diff_bit):
+                self.directory[i] = new_bucket_id
+
+        old_items = old_bucket["items"]
+        old_bucket["items"] = []
+        for (k, v) in old_items:
+            dir_index = self._get_directory_index(k)
+            b_id = self.directory[dir_index]
+            self.buckets[b_id]["items"].append((k, v))
 
     def _shrink_directory_if_possible(self):
         while self.global_depth > 1:
-            if any(
-                b["local_depth"] == self.global_depth
-                for b in self.buckets
-                ):
+            if any(b["local_depth"] == self.global_depth for b in self.buckets):
                 break
-
             half = 1 << (self.global_depth - 1)
             if self.directory[:half] == self.directory[half:]:
                 self.directory = self.directory[:half]
                 self.global_depth -= 1
             else:
                 break
+
     def _try_merge(self, bucket_id: int):
         while True:
             bucket = self.buckets[bucket_id]
@@ -99,7 +95,6 @@ class ExtensibleHash:
                 self.directory[di] = buddy_id
 
             buddy["local_depth"] -= 1
-
             bucket["items"].clear()
 
             self._shrink_directory_if_possible()
@@ -112,21 +107,20 @@ class ExtensibleHash:
             dir_index = self._get_directory_index(key)
             bucket_id = self.directory[dir_index]
             bucket = self.buckets[bucket_id]
-            
+
             bits = format(dir_index, f'0{self.global_depth}b')
-            
             print(f"Inserindo chave {key} no bucket {bucket_id} (dir index: {dir_index}, bits: {bits})")
-            
+
             # se chave já existe, atualiza valor
-            for i, (k, v) in enumerate(bucket["items"]): 
+            for i, (k, v) in enumerate(bucket["items"]):
                 if k == key:
                     bucket["items"][i] = (key, value)
                     return
-            
+
             if len(bucket["items"]) < self.bucket_size:
                 bucket["items"].append((key, value))
                 return
-            
+
             # bucket cheio, dividir
             self._split_bucket(bucket_id)
             # tentar inserir novamente
@@ -137,12 +131,12 @@ class ExtensibleHash:
         bits = format(dir_index, f'0{self.global_depth}b')
         bucket_id = self.directory[dir_index]
         bucket = self.buckets[bucket_id]
-        
+
         for (k, v) in bucket["items"]:
             if k == key:
                 print(f"Chave {key} encontrada no bucket {bucket_id} (dir index: {dir_index}, bits: {bits})")
                 return v
-    
+
         print(f"Chave {key} não encontrada no bucket")
         return None
 
@@ -165,58 +159,69 @@ class ExtensibleHash:
         print(f"Chave {key} não encontrada para remoção")
         return False
 
+    def seed(self, n: int):
+        if n <= 0:
+            print("Inserir > 0.")
+            return
+        for i in range(1, n + 1):
+            value = chr(ord('a') + ((i - 1) % 26))
+            self.insert(i, value)
+        print(f"itens inseridos.")
+
     def display(self):
         """Exibe o diretório e os buckets da tabela hash."""
         print("\n=== Extensible Hash ===")
         print("\nDiretório:")
         print(f"Profundidade Global: {self.global_depth}")
-        for i,bucket_index in enumerate(self.directory):
+        for i, bucket_index in enumerate(self.directory):
             bits = format(i, f'0{self.global_depth}b')
             print(f"Index {i} (bits: {bits}) -> Bucket {bucket_index}")
-        
-        
-        refcount = [0]*len(self.buckets)
+
+        refcount = [0] * len(self.buckets)
         for bidx in self.directory:
             if bidx < len(refcount):
-              refcount[bidx] += 1
-              
+                refcount[bidx] += 1
+
         print("\nBuckets:")
         for i, bucket in enumerate(self.buckets):
             if refcount[i] > 0:
-              print(f"Bucket {i}: Profundidade Local: {bucket['local_depth']}, Itens: {bucket['items']}")
-    
-def main(): 
+                print(f"Bucket {i}: Profundidade Local: {bucket['local_depth']}, Itens: {bucket['items']}")
+
+def main():
     print("Hash Extensível\n")
-    bucket_size = int(input("tamanho máximo itens por bucket:"))
+    bucket_size = int(input("tamanho máximo itens por bucket: "))
     hash = ExtensibleHash(bucket_size)
-    
-    while True: 
-        print("\n1. Inserir\n2. Buscar\n3. Remover\n4. Exibir\n5. Sair")
+
+    while True:
+        print("\n1. Inserir\n2. Buscar\n3. Remover\n4. Exibir\n5. Sair\n6. Seed (popular)")
         cmd = int(input("Escolha uma opção: "))
-        if cmd == 1: 
+        if cmd == 1:
             key = int(input("Chave (inteiro): "))
             value = input("Valor: ")
             hash.insert(key, value)
             print(f"Item ({key}, {value}) inserido.")
-        elif cmd == 2: 
+        elif cmd == 2:
             key = int(input("Chave (inteiro): "))
             result = hash.search(key)
             if result is not None:
                 print(f"Valor encontrado: {result}")
             else:
                 print("Chave não encontrada.")
-        elif cmd == 3: 
+        elif cmd == 3:
             key = int(input("Chave (inteiro): "))
             if hash.remove(key):
                 print("Item removido.")
             else:
                 print("Chave não encontrada.")
-        elif cmd == 4: 
+        elif cmd == 4:
             hash.display()
-        elif cmd == 5: 
+        elif cmd == 5:
             print("---")
             break
-        else: 
+        elif cmd == 6:
+            n = int(input("Quantidade de itens para popular (n): "))
+            hash.seed(n)
+        else:
             print("Opção inválida. Tente novamente.")
 
 if __name__ == "__main__":
