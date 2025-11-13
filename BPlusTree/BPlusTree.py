@@ -24,7 +24,6 @@ class BPlusTree:
         self.root = Node(order)
 
     def search(self, key: int):
-        """Find the value(s) for a given key."""
         current = self.root
         while not current.leaf:
             i = 0
@@ -32,23 +31,19 @@ class BPlusTree:
                 i += 1
             current = current.children[i]
 
-        # Leaf node reached
         for i, k in enumerate(current.keys):
             if k == key:
                 return current.values[i]
         return None
 
     def insert(self, key: int, value: any):
-        """Insert a key-value pair into the B+ tree."""
         root = self.root
 
-        # If root is empty, initialize it
         if len(root.keys) == 0:
             root.keys.append(key)
             root.values.append([value])
             return
 
-        # Traverse down to the leaf
         parent_stack = []
         current = root
         while not current.leaf:
@@ -58,7 +53,6 @@ class BPlusTree:
                 i += 1
             current = current.children[i]
 
-        # Insert in sorted order in leaf
         i = 0
         while i < len(current.keys) and key > current.keys[i]:
             i += 1
@@ -68,29 +62,24 @@ class BPlusTree:
             current.keys.insert(i, key)
             current.values.insert(i, [value])
 
-        # Split leaf if needed
         if len(current.keys) > current.order:
             self._split_leaf(current, parent_stack)
 
     def _split_leaf(self, leaf, parent_stack):
-        """Split a leaf node when it overflows."""
         mid = math.ceil(leaf.order / 2)
         new_leaf = Node(leaf.order)
         new_leaf.leaf = True
 
-        # Move half keys to the new leaf
         new_leaf.keys = leaf.keys[mid:]
         new_leaf.values = leaf.values[mid:]
         leaf.keys = leaf.keys[:mid]
         leaf.values = leaf.values[:mid]
 
-        # Maintain linked list of leaves
         new_leaf.next = leaf.next
         leaf.next = new_leaf
 
         promoted_key = new_leaf.keys[0]
 
-        # Check if we need to create a new root
         if not parent_stack:
             new_root = Node(leaf.order)
             new_root.leaf = False
@@ -103,7 +92,6 @@ class BPlusTree:
         self._insert_in_parent(parent, new_leaf, promoted_key, parent_stack)
 
     def _insert_in_parent(self, parent, new_child, key, parent_stack):
-        """Insert promoted key into an internal node, split if needed."""
         i = 0
         while i < len(parent.keys) and key > parent.keys[i]:
             i += 1
@@ -115,7 +103,6 @@ class BPlusTree:
             self._split_internal(parent, parent_stack)
 
     def _split_internal(self, node, parent_stack):
-        """Split an internal node when it overflows."""
         mid = math.ceil(node.order / 2)
         new_node = Node(node.order)
         new_node.leaf = False
@@ -137,13 +124,11 @@ class BPlusTree:
 
         parent = parent_stack.pop()
         self._insert_in_parent(parent, new_node, promoted_key, parent_stack)
-        
+
     def remove(self, key: int):
-        """Remove a key from the B+ tree."""
         current = self.root
         parent_stack = []
 
-        # Traverse to leaf
         while not current.leaf:
             parent_stack.append(current)
             i = 0
@@ -151,11 +136,9 @@ class BPlusTree:
                 i += 1
             current = current.children[i]
 
-        # Key not found
         if key not in current.keys:
             return False
 
-        # Remove key-value pair
         index = current.keys.index(key)
         current.keys.pop(index)
         current.values.pop(index)
@@ -165,22 +148,18 @@ class BPlusTree:
             if child_index > 0 and len(current.keys) > 0:
                 parent.keys[child_index - 1] = current.keys[0]
 
-        # If root is empty
         if current == self.root:
             if not current.leaf and len(current.children) > 0:
                 self.root = current.children[0]
             return True
 
-        # Check underflow
         min_keys = math.ceil(current.order / 2) - 1
         if len(current.keys) < min_keys:
             self._rebalance(current, parent_stack)
 
         return True
 
-
     def _rebalance(self, node, parent_stack):
-        """Rebalance the tree after deletion."""
         if not parent_stack:
             return
 
@@ -192,7 +171,6 @@ class BPlusTree:
 
         min_keys = math.ceil(node.order / 2) - 1
 
-        # Borrow from left
         if left_sibling and len(left_sibling.keys) > min_keys:
             borrowed_key = left_sibling.keys.pop(-1)
             borrowed_value = left_sibling.values.pop(-1)
@@ -201,7 +179,6 @@ class BPlusTree:
             parent.keys[index - 1] = node.keys[0]
             return
 
-        # Borrow from right
         if right_sibling and len(right_sibling.keys) > min_keys:
             borrowed_key = right_sibling.keys.pop(0)
             borrowed_value = right_sibling.values.pop(0)
@@ -231,10 +208,7 @@ class BPlusTree:
         if len(parent.keys) < min_parent_keys:
             self._rebalance(parent, parent_stack)
 
-
-
     def display(self):
-        """Display the tree by level."""
         nodes = [self.root]
         level = 0
         while nodes:
@@ -249,16 +223,45 @@ class BPlusTree:
             level += 1
 
 
-bplus = BPlusTree(order=4)
-for k, v in [(10, 'a'), (20, 'b'), (40, 'c'), 
-             (50, 'd'), (60, 'e'), (70, 'f'), (80, 'g'), (30, 'h'), (35, 'i'), (5, 'j'), (15, 'k')]:
-    bplus.insert(k, v)
+def main():
+    tree = BPlusTree(order=4)
 
-bplus.display()
+    while True:
+        print("\n===== B+ TREE TERMINAL =====")
+        print("1 - Inserir")
+        print("2 - Buscar")
+        print("3 - Remover")
+        print("4 - Mostrar árvore")
+        print("5 - Sair")
 
-print("\nSearch 15:", bplus.search(15))
-print("Search 99:", bplus.search(99))
+        op = input("Escolha: ")
 
-print("\nRemoving 60")
-bplus.remove(60)
-bplus.display()
+        if op == "1":
+            key = int(input("Chave: "))
+            value = input("Valor: ")
+            tree.insert(key, value)
+            print("Inserido.\n")
+
+        elif op == "2":
+            key = int(input("Chave: "))
+            res = tree.search(key)
+            print("Resultado:", res)
+
+        elif op == "3":
+            key = int(input("Chave: "))
+            ok = tree.remove(key)
+            print("Removido." if ok else "Chave não encontrada.")
+
+        elif op == "4":
+            print("\nÁrvore:")
+            tree.display()
+
+        elif op == "5":
+            print("Encerrando...")
+            break
+
+        else:
+            print("Opção inválida!")
+
+if __name__ == "__main__":
+    main()
