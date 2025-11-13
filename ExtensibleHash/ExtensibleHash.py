@@ -109,7 +109,19 @@ class ExtensibleHash:
 
     def remove(self, key: int) -> bool:
         """Remove o registro com a chave informada."""
-        pass
+        dir_index = self._get_directory_index(key)
+        bits = format(dir_index, f'0{self.global_depth}b')
+        bucket_id = self.directory[dir_index]
+        bucket = self.buckets[bucket_id]
+        
+        for i, (k, v) in enumerate(bucket["items"]):
+            if k == key:
+                del bucket["items"][i]
+                print(f"Chave {key} removida do bucket {bucket_id} (dir index: {dir_index}, bits: {bits})")
+                return True
+        
+        print(f"Chave {key} não encontrada para remoção")
+        return False
 
     def display(self):
         """Exibe o diretório e os buckets da tabela hash."""
