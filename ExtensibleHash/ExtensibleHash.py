@@ -26,6 +26,9 @@ class ExtensibleHash:
             h = self._hash(key)
             mask = (1 << self.global_depth) - 1
             return h & mask
+
+    def _directory_indexes_for(self, bucket_id: int):
+        return [i for i, b in enumerate(self.directory) if b == bucket_id]
         
     def _split_bucket(self, bucket_id: int): 
             """Divide o bucket quando ele estiver cheio e aumentar a profundidade local"""
@@ -57,6 +60,51 @@ class ExtensibleHash:
                 dir_index = self._get_directory_index(k)
                 b_id = self.directory[dir_index]
                 self.buckets[b_id]["items"].append((k, v))
+
+    def _shrink_directory_if_possible(self):
+        while self.global_depth > 1:
+            if any(
+                b["local_depth"] == self.global_depth
+                for b in self.buckets
+                ):
+                break
+
+            half = 1 << (self.global_depth - 1)
+            if self.directory[:half] == self.directory[half:]:
+                self.directory = self.directory[:half]
+                self.global_depth -= 1
+            else:
+                break
+    def _try_merge(self, bucket_id: int):
+        while True:
+            bucket = self.buckets[bucket_id]
+            ld = bucket["local_depth"]
+
+            if len(bucket["items"]) != 0 or ld == 0:
+                break
+
+            idxs = self._directory_indexes_for(bucket_id)
+            if not idxs:
+                break
+
+            i = idxs[0]
+            buddy_index = i ^ (1 << (ld - 1))
+            buddy_id = self.directory[buddy_index]
+            buddy = self.buckets[buddy_id]
+
+            if buddy_id == bucket_id or buddy["local_depth"] != ld:
+                break
+
+            for di in idxs:
+                self.directory[di] = buddy_id
+
+            buddy["local_depth"] -= 1
+
+            bucket["items"].clear()
+
+            self._shrink_directory_if_possible()
+
+            bucket_id = buddy_id
 
     def insert(self, key: int, value: any):
         """Insere um par (chave, valor) na estrutura."""
@@ -99,18 +147,21 @@ class ExtensibleHash:
         return None
 
     def remove(self, key: int) -> bool:
-        """Remove o registro com a chave informada."""
+        """Remove o registro com a chave informada e tenta mesclar buckets vazios."""
         dir_index = self._get_directory_index(key)
         bits = format(dir_index, f'0{self.global_depth}b')
         bucket_id = self.directory[dir_index]
         bucket = self.buckets[bucket_id]
-        
+
         for i, (k, v) in enumerate(bucket["items"]):
             if k == key:
                 del bucket["items"][i]
                 print(f"Chave {key} removida do bucket {bucket_id} (dir index: {dir_index}, bits: {bits})")
+
+                if len(bucket["items"]) == 0:
+                    self._try_merge(bucket_id)
                 return True
-        
+
         print(f"Chave {key} não encontrada para remoção")
         return False
 
