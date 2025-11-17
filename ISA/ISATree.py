@@ -1,152 +1,138 @@
 class Node:
-    """Representa um nó da árvore ISA."""
-    def __init__(self, key, value):
-        self.key = key
+    def __init__(self, value):
         self.value = value
-        self.left = None
-        self.right = None
+        self.children = []
+        self.items = []  # valores inseridos neste nó
+
+    def add_child(self, child_node):
+        self.children.append(child_node)
 
 
 class ISATree:
-    """Implementação simples de uma árvore ISA (índice secundário agrupado)."""
-
     def __init__(self):
-        self.root = None
+        # ---------- Criando a ISA Tree Estática ----------
+        self.root = Node(0)
 
-    def insert(self, key, value):
-        """Insere um par chave-valor na árvore."""
-        if self.root is None:
-            self.root = Node(key, value)
-        else:
-            self._insert(self.root, key, value)
+        node1 = Node(1)
+        node2 = Node(2)
+        node3 = Node(3)
+        node4 = Node(4)
+        node5 = Node(5)
+        node6 = Node(6)
 
-    def _insert(self, node, key, value):
-        if key == node.key:
-            node.value = value  # Atualiza valor se a chave já existir
-        elif key < node.key:
-            if node.left:
-                self._insert(node.left, key, value)
-            else:
-                node.left = Node(key, value)
-        else:
-            if node.right:
-                self._insert(node.right, key, value)
-            else:
-                node.right = Node(key, value)
+        # estrutura:
+        # 0 -> {1, 2}
+        # 1 -> {3, 4}
+        # 2 -> {5, 6}
 
-    def search(self, key):
-        """Busca um valor pela chave."""
-        return self._search(self.root, key)
+        self.root.add_child(node1)
+        self.root.add_child(node2)
 
-    def _search(self, node, key):
-        if not node:
-            return None
-        if key == node.key:
-            return node.value
-        elif key < node.key:
-            return self._search(node.left, key)
-        else:
-            return self._search(node.right, key)
+        node1.add_child(node3)
+        node1.add_child(node4)
 
-    def remove(self, key):
-        """Remove uma chave da árvore."""
-        self.root = self._remove(self.root, key)
+        node2.add_child(node5)
+        node2.add_child(node6)
 
-    def _remove(self, node, key):
-        if not node:
-            return None
-        if key < node.key:
-            node.left = self._remove(node.left, key)
-        elif key > node.key:
-            node.right = self._remove(node.right, key)
-        else:
-            # Caso 1: nó sem filhos
-            if not node.left and not node.right:
-                return None
-            # Caso 2: um filho
-            if not node.left:
-                return node.right
-            if not node.right:
-                return node.left
-            # Caso 3: dois filhos — substitui pelo menor da subárvore direita
-            min_larger_node = self._min_value_node(node.right)
-            node.key, node.value = min_larger_node.key, min_larger_node.value
-            node.right = self._remove(node.right, min_larger_node.key)
-        return node
+        # Dicionário para acesso rápido
+        self.map = {
+            0: self.root,
+            1: node1,
+            2: node2,
+            3: node3,
+            4: node4,
+            5: node5,
+            6: node6,
+        }
 
-    def _min_value_node(self, node):
-        current = node
-        while current.left:
-            current = current.left
-        return current
+    # --------------------- OPERAÇÕES ------------------------
+
+    def insert(self, node_value, item):
+        if node_value not in self.map:
+            print("Tipo inexistente na ISA Tree.")
+            return
+
+        self.map[node_value].items.append(item)
+        print(f"Inserido {item} no tipo {node_value}")
+
+    def search(self, item):
+        for node_value, node in self.map.items():
+            if item in node.items:
+                print(f"Encontrado: valor {item} está no tipo {node_value}")
+                return True
+
+        print("Valor não encontrado na árvore.")
+        return False
+
+    def remove(self, item):
+        for node_value, node in self.map.items():
+            if item in node.items:
+                node.items.remove(item)
+                print(f"Removido {item} do tipo {node_value}")
+                return True
+
+        print("Valor não encontrado para remoção.")
+        return False
 
     def display(self):
-        """Mostra a árvore (ordem simétrica)."""
-        if self.root is None:
-            print("Árvore vazia.")
-            return
-        print("\nÁrvore ISA (em ordem):")
-        self._inorder(self.root)
-        print("\n")
+        print("\n====== Estrutura da ISA Tree ======\n")
+        self._display_pretty(self.root, "", True)
+        print("\n===================================\n")
 
-    def _inorder(self, node):
-        if node:
-            self._inorder(node.left)
-            print(f"{node.key}: {node.value}", end=" | ")
-            self._inorder(node.right)
+    def _display_pretty(self, node, prefix, is_last):
+        # prefixo visual
+        connector = "└── " if is_last else "├── "
+
+        # imprime o nó
+        print(prefix + connector + f"{node.value}  (itens: {node.items})")
+
+        # prepara prefixo para filhos
+        new_prefix = prefix + ("    " if is_last else "│   ")
+
+        # imprime filhos
+        count = len(node.children)
+        for i, child in enumerate(node.children):
+            last = (i == count - 1)
+            self._display_pretty(child, new_prefix, last)
 
 
-# ========== MENU INTERATIVO ==========
+
+# ===================== MENU INTERATIVO ======================
+
 def menu():
-    isa = ISATree()
+    tree = ISATree()
 
     while True:
-        print("\n===== MENU - ARVORE ISA =====")
-        print("1. Inserir chave e valor")
-        print("2. Buscar chave")
-        print("3. Remover chave")
-        print("4. Exibir arvore (em ordem)")
-        print("5. Sair")
+        print("\n===== MENU ISA TREE =====")
+        print("1 - Inserir valor em um tipo")
+        print("2 - Buscar valor")
+        print("3 - Remover valor")
+        print("4 - Exibir árvore")
+        print("0 - Sair")
+        opc = input("Escolha: ")
 
-        opcao = input("Escolha uma opcao: ")
+        if opc == "1":
+            tipo = int(input("Digite o tipo (0 a 6): "))
+            valor = input("Digite o valor a inserir: ")
+            tree.insert(tipo, valor)
 
-        if opcao == "1":
-            try:
-                chave = int(input("Digite a chave (inteiro): "))
-                valor = input("Digite o valor: ")
-                isa.insert(chave, valor)
-                print(f"Inserido: {chave} → {valor}")
-            except ValueError:
-                print("A chave deve ser um número inteiro.")
+        elif opc == "2":
+            valor = input("Digite o valor a buscar: ")
+            tree.search(valor)
 
-        elif opcao == "2":
-            try:
-                chave = int(input("Digite a chave a buscar: "))
-                resultado = isa.search(chave)
-                if resultado:
-                    print(f"Valor encontrado: {resultado}")
-                else:
-                    print("Chave não encontrada.")
-            except ValueError:
-                print("A chave deve ser um número inteiro.")
+        elif opc == "3":
+            valor = input("Digite o valor a remover: ")
+            tree.remove(valor)
 
-        elif opcao == "3":
-            try:
-                chave = int(input("Digite a chave a remover: "))
-                isa.remove(chave)
-                print(f"Chave {chave} removida (se existia).")
-            except ValueError:
-                print("A chave deve ser um número inteiro.")
+        elif opc == "4":
+            tree.display()
 
-        elif opcao == "4":
-            isa.display()
-
-        elif opcao == "5":
-            print("Encerrando o programa...")
+        elif opc == "0":
+            print("Encerrando...")
             break
 
         else:
-            print("Opção inválida! Tente novamente.")
+            print("Opção inválida.")
 
 
 if __name__ == "__main__":
