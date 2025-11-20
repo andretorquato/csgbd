@@ -50,9 +50,9 @@ python BPlusTree/BPlusTree.py
 python ISA/ISATree.py
 ```
 
-## Autor
+## Autores
 
-Nome: André Torquato, Lucas Torres, Elixandre Filho
+Nome: [André Torquato](https://github.com/andretorquato/), [Lucas Torres](https://github.com/torreslucs23), [Elixandre Filho](https://github.com/elisilveira)
 
 Curso: Sistema de Informação
 
