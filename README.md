@@ -1,6 +1,6 @@
 # Trabalho - Indexação (Hash Extensível e Árvore B+)
 
-Repositório do trabalho da disciplina **SGBD**.
+Repositório do trabalho da disciplina **CSGBD**.
 
 ## Objetivo
 
@@ -16,7 +16,7 @@ Com as operações: inserir, buscar, remover e exibir.
 
 ## Linguagem
 
-O projeto desenvolvido em **Python 3.x**.
+Projeto desenvolvido em **Python**.
 
 ## Estrutura do Projeto
 
@@ -56,5 +56,5 @@ Nome: André Torquato, Lucas Torres, Elixandre Filho
 
 Curso: Sistema de Informação
 
-Disciplina: Sistemas de Gerenciamento de Banco de Dados
+Disciplina: Construção de Sistemas de Gerenciamento de Banco de Dados
 
